@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <title>Home</title>
+    <link rel="canonical" href="https://getbootstrap.com/docs/4.5/examples/sign-in/">
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <h1>Upload File</h1>
+        <button type="submit" value="Upload" class="btn btn-dark" th:if="${not #lists.isEmpty(renderImg)}">Back</button>
+    </div>
+    <form method="POST" enctype="multipart/form-data" th:action="@{/}" th:if="${#lists.isEmpty(renderImg)}">
+        <input type="file" name="file"/>
+        <button type="submit" value="Upload" class="btn btn-dark">Upload</button>
+    </form>
+    <a th:href="${outputFile}" th:text="${outputFile}" class="btn btn-success" th:if="${outputFile} != null"></a>
+    <div class="card text-center" th:if="${not #lists.isEmpty(renderImg)}">
+        <form method="POST" th:action="@{/merge}">
+            <button type="submit" value="Upload" class="btn btn-dark btn-lg btn-block">Split</button>
+            <div class="row row-cols-md-6">
+                <div class="col mb-2" th:each="img,iterator : ${renderImg}">
+                    <div class="card hove">
+                        <div class="form-check">
+                            <input name="checkboxName" th:attr="value=${iterator.index} + 1" type="checkbox"
+                                   class="form-check-input" th:attrappend="id=${iterator.index} + 1" id="">
+                            <label class="form-check-label" th:attrappend="for=${iterator.index} + 1" for="">
+                                <img class="card-img-top" width="120" height="160" alt="pic" th:src="${img}">
+                                <small class="font-weight-bold" th:text="${iterator.index} + 1"></small>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+<script defer src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+        integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+        crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
+        integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN"
+        crossorigin="anonymous"></script>
+<script defer src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"
+        integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV"
+        crossorigin="anonymous"></script>
+</body>
+</html>
