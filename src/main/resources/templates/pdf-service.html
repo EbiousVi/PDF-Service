@@ -2,14 +2,14 @@
 <html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
-    <title>Home</title>
+    <title>Split PDF</title>
     <link rel="canonical" href="https://getbootstrap.com/docs/4.5/examples/sign-in/">
 </head>
 <body>
 <div class="container">
     <div class="row">
         <h1>Upload File</h1>
-        <button type="submit" value="Upload" class="btn btn-dark" th:if="${not #lists.isEmpty(renderImg)}">Back</button>
+        <a type="submit" th:href="@{/}" class="btn btn-dark" th:if="${not #lists.isEmpty(renderImg)}">Back</a>
     </div>
     <form method="POST" enctype="multipart/form-data" th:action="@{/}" th:if="${#lists.isEmpty(renderImg)}">
         <input type="file" name="file"/>
@@ -17,7 +17,7 @@
     </form>
     <a th:href="${outputFile}" th:text="${outputFile}" class="btn btn-success" th:if="${outputFile} != null"></a>
     <div class="card text-center" th:if="${not #lists.isEmpty(renderImg)}">
-        <form method="POST" th:action="@{/merge}">
+        <form method="POST" th:action="@{/split}">
             <button type="submit" value="Upload" class="btn btn-dark btn-lg btn-block">Split</button>
             <div class="row row-cols-md-6">
                 <div class="col mb-2" th:each="img,iterator : ${renderImg}">

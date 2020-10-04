@@ -1,6 +1,7 @@
 package com.example.pdf.controller;
 
 import com.example.pdf.Service.PdfServiceImpl;
+import com.example.pdf.Service.StorageServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -11,38 +12,39 @@ import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
+
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Controller
 public class PdfController {
-    private static Path splitPdfFolderPath;
-    private static Path uploadMultipartFilePath;
-    private final PdfServiceImpl pdfServiceImpl;
+    private final StorageServiceImpl storageService;
+    private final PdfServiceImpl pdfService;
 
     @Autowired
-    public PdfController(PdfServiceImpl pdfServiceImpl) {
-        this.pdfServiceImpl = pdfServiceImpl;
+    public PdfController(PdfServiceImpl pdfService, StorageServiceImpl storageService) {
+        this.pdfService = pdfService;
+        this.storageService = storageService;
     }
 
-    @PostMapping("/merge")
-    public String merge(@RequestParam("checkboxName") String[] checkboxValue, Model model) {
-        Path path = pdfServiceImpl.mergeSplitFile(checkboxValue, splitPdfFolderPath);
+    @PostMapping("/split")
+    public String split(@RequestParam("checkboxName") String[] checkboxValue, Model model) {
+        Path downloadPath = pdfService.extractRequiredPages(checkboxValue, storageService.getCurrentFilePath());
         model.addAttribute("outputFile", MvcUriComponentsBuilder.fromMethodName(PdfController.class, "serveFile",
-                path.getFileName().toString()).build().toUri().toString());
+                downloadPath.getFileName().toString()).build().toUri().toString());
         return "pdf-service";
     }
 
     @PostMapping("/")
-    public String handleFileUpload(@RequestParam("file") MultipartFile file, ModelMap model) {
-        uploadMultipartFilePath = pdfServiceImpl.saveUploadFile(file);
-        splitPdfFolderPath = pdfServiceImpl.splitUploadFile(uploadMultipartFilePath);
-        model.addAttribute("renderImg", pdfServiceImpl.renderImage(uploadMultipartFilePath).stream().map(
-                path -> MvcUriComponentsBuilder.fromMethodName(PdfController.class,
-                        "serveFile", path.getFileName()
-                                .toString()).build().toUri().toString())
-                .collect(Collectors.toList()));
+    public String uploadFile(@RequestParam("file") MultipartFile file, ModelMap model) {
+        Path uploadFilePath = storageService.saveUploadFile(file);
+        storageService.setCurrentFilePath(uploadFilePath);
+        List<String> renderImg = pdfService.renderImgForView(uploadFilePath).stream()
+                .map(path -> MvcUriComponentsBuilder.fromMethodName(PdfController.class,
+                        "serveFile", path.getFileName().toString()).build().toUri().toString())
+                .collect(Collectors.toList());
+        model.addAttribute("renderImg", renderImg);
         return "pdf-service";
     }
 
@@ -54,7 +56,7 @@ public class PdfController {
     @GetMapping("/file/{filename:.+}")
     @ResponseBody
     public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
-        Resource file = pdfServiceImpl.loadAsResource(filename, uploadMultipartFilePath);
+        Resource file = storageService.loadAsResource(filename);
         return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,
                 "attachment; filename=\"" + file.getFilename() + "\"").body(file);
     }
