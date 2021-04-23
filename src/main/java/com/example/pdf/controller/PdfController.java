@@ -1,19 +1,20 @@
 package com.example.pdf.controller;
 
-import com.example.pdf.Service.PdfServiceImpl;
-import com.example.pdf.Service.StorageServiceImpl;
+import com.example.pdf.service.pdf.split.PdfServiceImpl;
+import com.example.pdf.service.storage.StorageServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
+import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,24 +29,34 @@ public class PdfController {
         this.storageService = storageService;
     }
 
-    @PostMapping("/split")
-    public String split(@RequestParam("checkboxName") String[] checkboxValue, Model model) {
-        Path downloadPath = pdfService.extractRequiredPages(checkboxValue, storageService.getCurrentFilePath());
-        model.addAttribute("outputFile", MvcUriComponentsBuilder.fromMethodName(PdfController.class, "serveFile",
-                downloadPath.getFileName().toString()).build().toUri().toString());
-        return "pdf-service";
+    @PostMapping("/upload-multiple")
+    @ResponseBody
+    public List<Path> merge(@RequestBody MultipartFile[] files) {
+        System.out.println(Arrays.toString(files));
+        Arrays.stream(files).forEach(x -> System.out.println(x.getOriginalFilename()));
+        return storageService.saveUploadFiles(files);
     }
 
-    @PostMapping("/")
-    public String uploadFile(@RequestParam("file") MultipartFile file, ModelMap model) {
+    @PostMapping("/split")
+    @ResponseBody
+    public String split(@RequestBody Integer[] checkboxValue) {
+        Path downloadPath = pdfService.extractRequiredPages(checkboxValue, storageService.getUploadFilePath());
+        return MvcUriComponentsBuilder.fromMethodName(PdfController.class, "serveFile",
+                downloadPath.getFileName().toString()).build().toUri().toString();
+    }
+
+    @PostMapping("/upload-single")
+    @ResponseBody
+    public List<String> uploadFile(@RequestBody MultipartFile file) throws IOException {
+        System.out.println(file.getOriginalFilename());
         Path uploadFilePath = storageService.saveUploadFile(file);
-        storageService.setCurrentFilePath(uploadFilePath);
-        List<String> renderImg = pdfService.renderImgForView(uploadFilePath).stream()
-                .map(path -> MvcUriComponentsBuilder.fromMethodName(PdfController.class,
-                        "serveFile", path.getFileName().toString()).build().toUri().toString())
+        List<String> renderImg = pdfService.renderImgForView(uploadFilePath)
+                .stream()
+                .map(path -> MvcUriComponentsBuilder.fromMethodName(PdfController.class, "serveFile",
+                        path.getFileName().toString()).build().toUri().toString())
                 .collect(Collectors.toList());
-        model.addAttribute("renderImg", renderImg);
-        return "pdf-service";
+
+        return renderImg;
     }
 
     @GetMapping("/")

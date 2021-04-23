@@ -2,31 +2,63 @@
 <html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <meta charset="UTF-8">
-    <title>Split PDF</title>
+    <title>PDF Service</title>
     <link rel="canonical" href="https://getbootstrap.com/docs/4.5/examples/sign-in/">
 </head>
 <body>
 <div class="container">
-    <div class="row">
-        <h1>Upload File</h1>
-        <a type="submit" th:href="@{/}" class="btn btn-dark" th:if="${not #lists.isEmpty(renderImg)}">Back</a>
+    <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+        <a class="navbar-brand" th:href="@{/home}" href="/home">Главная</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse"
+                aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" th:href="@{/home/notes/}" href="/home/notes/">Объединить<span
+                            class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" th:href="@{/home/team/your-team}" href="/home/team/your-team">Разделить<span
+                            class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" th:href="@{/home/team}" href="/home/team">Конвертировать<span
+                            class="sr-only">(current)</span></a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <div class="page text-center">
+        <div class="page text-center">
+            <h2>Выбрать файл PDF</h2>
+            <a type="submit" th:href="@{/}" class="btn btn-secondary" th:if="${not #lists.isEmpty(renderImg)}">Назад</a>
+        </div>
+        <form method="POST" enctype="multipart/form-data" th:action="@{/}" th:if="${#lists.isEmpty(renderImg)}">
+            <input type="file" name="file"/>
+            <button style="width: fit-content" type="submit" value="Upload" class="btn btn-dark">Загрузить</button>
+        </form>
     </div>
-    <form method="POST" enctype="multipart/form-data" th:action="@{/}" th:if="${#lists.isEmpty(renderImg)}">
-        <input type="file" name="file"/>
-        <button type="submit" value="Upload" class="btn btn-dark">Upload</button>
-    </form>
-    <a th:href="${outputFile}" th:text="${outputFile}" class="btn btn-success" th:if="${outputFile} != null"></a>
-    <div class="card text-center" th:if="${not #lists.isEmpty(renderImg)}">
+        <form method="POST" enctype="multipart/form-data" th:action="@{/merge}">
+            <input type="file" name="file" multiple/>
+            <button type="submit" value="Upload" class="btn btn-dark">newFeatures</button>
+        </form>
+
+    <a th:href="${outputFile}" th:text="'Скачать ' + ${outputFile}" class="btn btn-success"
+       th:if="${outputFile} != null"></a>
+    <div class="page text-center" th:if="${not #lists.isEmpty(renderImg)}">
         <form method="POST" th:action="@{/split}">
-            <button type="submit" value="Upload" class="btn btn-dark btn-lg btn-block">Split</button>
+            <button type="submit" value="Upload" class="btn btn-dark btn-lg btn-block" style="width: fit-content">Извлечь страницы</button>
+            <h3>Выберите страницы или введите диапазон</h3>
             <div class="row row-cols-md-6">
-                <div class="col mb-2" th:each="img,iterator : ${renderImg}">
-                    <div class="card hove">
+                <div class="col mb-2" th:each="images,iterator : ${renderImg}">
+                    <div class="page hove">
                         <div class="form-check">
-                            <input name="checkboxName" th:attr="value=${iterator.index} + 1" type="checkbox"
-                                   class="form-check-input" th:attrappend="id=${iterator.index} + 1" id="">
+                            <input name="checkboxName" th:attr="value=${iterator.index}" type="checkbox"
+                                   class="form-check-input" th:attrappend="id=${iterator.index} + 1" id="" style="width: 20px; height: 20px;}">
                             <label class="form-check-label" th:attrappend="for=${iterator.index} + 1" for="">
-                                <img class="card-img-top" width="120" height="160" alt="pic" th:src="${img}">
+                                <img class="card-img-top" width="140" height="190" alt="pic" th:src="${images}" >
                                 <small class="font-weight-bold" th:text="${iterator.index} + 1"></small>
                             </label>
                         </div>
