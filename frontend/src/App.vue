@@ -1,19 +1,15 @@
 <template>
-    <upload-file v-if="false"></upload-file>
-    <upload-multiple-file></upload-multiple-file>
+    <upload-file></upload-file>
 </template>
 
 <script>
 
     import UploadFile from "./components/UploadFile";
-    import UploadMultipleFile from "./components/UploadMultipleFile";
 
     export default {
         name: 'App',
         components: {
-            UploadMultipleFile,
             UploadFile,
-
         },
         data() {
             return {}

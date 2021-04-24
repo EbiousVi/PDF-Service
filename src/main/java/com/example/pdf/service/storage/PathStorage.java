@@ -8,12 +8,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class PathsStorage {
+public final class PathStorage {
     private final Path storageRoot = Paths.get("src", "main", "resources", "pdf-service");
-    ;
     private Path uploadRootDir;
     private Path uploadFilePath;
-    private List<Path> uploadFilesPath = new ArrayList<>();
+    private final List<Path> uploadFilesPath = new ArrayList<>();
 
     public Path getStorageRoot() {
         return storageRoot;
@@ -39,7 +38,7 @@ public class PathsStorage {
         return uploadFilesPath;
     }
 
-    public void setUploadFilesPath(List<Path> uploadFilesPath) {
-        this.uploadFilesPath = uploadFilesPath;
+    public void addToUploadFilesPath(Path path) {
+        uploadFilesPath.add(path);
     }
 }

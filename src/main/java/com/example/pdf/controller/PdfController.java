@@ -1,20 +1,20 @@
 package com.example.pdf.controller;
 
-import com.example.pdf.service.pdf.split.PdfServiceImpl;
+import com.example.pdf.exception.StorageException;
+import com.example.pdf.service.pdf.PdfServiceImpl;
+import com.example.pdf.service.storage.PathStorage;
 import com.example.pdf.service.storage.StorageServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 
-import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,51 +22,37 @@ import java.util.stream.Collectors;
 public class PdfController {
     private final StorageServiceImpl storageService;
     private final PdfServiceImpl pdfService;
+    private final PathStorage pathStorage;
 
     @Autowired
-    public PdfController(PdfServiceImpl pdfService, StorageServiceImpl storageService) {
+    public PdfController(PdfServiceImpl pdfService, StorageServiceImpl storageService, PathStorage pathStorage) {
         this.pdfService = pdfService;
         this.storageService = storageService;
-    }
-
-    @PostMapping("/upload-multiple")
-    @ResponseBody
-    public List<Path> merge(@RequestBody MultipartFile[] files) {
-        System.out.println(Arrays.toString(files));
-        Arrays.stream(files).forEach(x -> System.out.println(x.getOriginalFilename()));
-        return storageService.saveUploadFiles(files);
+        this.pathStorage = pathStorage;
     }
 
     @PostMapping("/split")
     @ResponseBody
-    public String split(@RequestBody Integer[] checkboxValue) {
-        Path downloadPath = pdfService.extractRequiredPages(checkboxValue, storageService.getUploadFilePath());
+    public String split(@RequestBody Integer[] pages) throws StorageException {
+        Path path = pdfService.splitByPages(pages, pathStorage.getUploadFilePath());
         return MvcUriComponentsBuilder.fromMethodName(PdfController.class, "serveFile",
-                downloadPath.getFileName().toString()).build().toUri().toString();
+                path.getFileName().toString()).build().toUri().toString();
     }
 
     @PostMapping("/upload-single")
     @ResponseBody
-    public List<String> uploadFile(@RequestBody MultipartFile file) throws IOException {
-        System.out.println(file.getOriginalFilename());
+    public List<String> uploadFile(@RequestBody MultipartFile file) throws StorageException, UnsupportedEncodingException {
         Path uploadFilePath = storageService.saveUploadFile(file);
-        List<String> renderImg = pdfService.renderImgForView(uploadFilePath)
+        return pdfService.renderImgForView(uploadFilePath)
                 .stream()
                 .map(path -> MvcUriComponentsBuilder.fromMethodName(PdfController.class, "serveFile",
                         path.getFileName().toString()).build().toUri().toString())
                 .collect(Collectors.toList());
-
-        return renderImg;
-    }
-
-    @GetMapping("/")
-    public String home() {
-        return "pdf-service";
     }
 
     @GetMapping("/file/{filename:.+}")
     @ResponseBody
-    public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
+    public ResponseEntity<Resource> serveFile(@PathVariable String filename) throws StorageException {
         Resource file = storageService.loadAsResource(filename);
         return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,
                 "attachment; filename=\"" + file.getFilename() + "\"").body(file);

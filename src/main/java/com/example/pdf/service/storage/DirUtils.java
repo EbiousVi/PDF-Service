@@ -1,42 +1,68 @@
 package com.example.pdf.service.storage;
 
+import com.example.pdf.exception.StorageException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Service
 public class DirUtils {
-
-    private static StorageServiceImpl storage;
+    private static PathStorage pathStorage;
 
     @Autowired
-    public DirUtils(StorageServiceImpl storage) {
-        DirUtils.storage = storage;
+    public DirUtils(PathStorage pathStorage) {
+        DirUtils.pathStorage = pathStorage;
     }
 
-    public static Path createDirInRootUploadDir(String dirName) {
+    public static Path createDir(String dirName) throws StorageException {
         try {
-            Path dirPath = storage.getUploadRootDir().resolve(dirName);
+            Path dirPath = pathStorage.getUploadRootDir().resolve(dirName);
             if (!Files.exists(dirPath)) {
                 Files.createDirectory(dirPath);
             }
             return dirPath;
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("AAAAAAAAAAAAAAAAAAAAAAAA");
+        } catch (IOException e) {
+            throw new StorageException("Can't createDir", e);
         }
     }
 
-    public static Path createRootUploadDir(Path dirName) {
+    public static Path createUploadDirStructure(String uploadDirName, String uploadFile) throws StorageException {
+        Path rootUploadDir = createRootUploadDir(generateUploadRootDirName(uploadFile));
+        pathStorage.setUploadRootDir(rootUploadDir);
+        Path uploadDir = createDir(uploadDirName);
+        return uploadDir.resolve(uploadFile.replaceAll("\\s+", "_"));
+    }
+
+    private static Path createRootUploadDir(String dirName) throws StorageException {
         try {
-            Path rootUploadDir = storage.getStorageRoot().resolve(dirName);
-            Files.createDirectory(rootUploadDir);
+            Path rootUploadDir = pathStorage.getStorageRoot().resolve(dirName);
+            if (!Files.exists(rootUploadDir)) {
+                Files.createDirectory(rootUploadDir);
+            }
             return rootUploadDir;
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("AAAAAAAAAAAAAAAAAAAAAAAA");
+            throw new StorageException("Can't createRootUploadDir", e);
         }
+    }
+
+    private static String generateUploadRootDirName(String fileName) {
+        String timestamp = createTimestamp();
+        String deleteFileExtension = fileName.replaceAll("\\.[a-zA-Z].+", "");
+        return replaceWhiteSpace(deleteFileExtension + timestamp);
+    }
+
+    private static String createTimestamp() {
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yyyy_HH-mm-ss");
+        LocalDateTime now = LocalDateTime.now();
+        return dtf.format(now);
+    }
+
+    private static String replaceWhiteSpace(String fileName) {
+        return fileName.replaceAll("\\s+", "_");
     }
 }

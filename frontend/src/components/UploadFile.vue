@@ -1,82 +1,77 @@
 <template>
     <div class="container">
-        <div> {{checkboxesValues}}</div>
+        <div> {{checkboxValues}}</div>
         <div>
-            <button type="button" @click="selectAll()">SELECT ALL</button>
+            <button class="button" type="button" @click="selectAll()">SELECT ALL</button>
         </div>
         <div>
-            <label>File
-                <input type="file" id="file" ref="uploadFile" v-on:change="handleFileUpload()"/>
+            <label>SELECT PDF FILE
+                <input class="" type="file" id="file" ref="uploadFile" v-on:change="handleFileUpload()"/>
             </label>
         </div>
-        <button type="button" @click="sendPageNumbers()" class="send">SPLIT</button>
+        <button class="button" type="button" @click="sendPageNumbers()">SPLIT</button>
         <div class="template" v-if="imagesLoaded">
             <!--images array of image links. Image = single page. Page start from 0.
                 because PDF-Box at backend count pages from 0.
-                But in real world page count from 1. User see page like in real world in div block page-number.
+                But in real world page count start from 1. User see page like in real world in div block page-number.
                 But under the hood v-for index = page number = сheckbox value-->
             <div v-for="(image, i) of images" v-bind:key="image">
                 <div class="page" v-if="images[i] !== null" draggable="true">
                     <label class="checkbox">
-                        <input v-model="checkboxesValues" :value="i" type="checkbox"
-                               class="form-check-input">
+                        <input v-model="checkboxValues" :value="i" type="checkbox"
+                               class="form-check-input" required>
                     </label>
                     <div class="page-number">{{i}}</div>
                     <div class="delete">
                         <button @click="deletePage(i)" class="delete-button" type="button">&#10060;</button>
                     </div>
-                    <img draggable="false" @click="clickCheckbox(i)" :src="image" :alt="image"/>
+                    <img @click="clickCheckbox(i)" :src="image" :alt="image"/>
                 </div>
             </div>
         </div>
-        <div v-if="fileReady"><a :href="fileLink">DOWNLOAD</a></div>
+        <div v-if="fileLoaded"><a :href="splitFile">DOWNLOAD</a></div>
     </div>
 </template>
 
 
 <script>
-
     import axios from "axios";
 
     export default {
         name: "UploadFile",
-        setup() {
-
-        },
         data() {
             return {
                 uploadFile: "",
                 images: [],
                 imagesLoaded: false,
-                checkboxesValues: [],
+                checkboxValues: [],
                 allSelected: false,
-                fileLink: "",
-                fileReady: false,
+                splitFile: "",
+                fileLoaded: false,
             }
         },
         methods: {
             clickCheckbox(value) {
-                const index = this.checkboxesValues.indexOf(value);
+                const index = this.checkboxValues.indexOf(value);
                 if (index === -1) {
-                    this.checkboxesValues.push(value);
+                    this.checkboxValues.push(value);
                 } else {
-                    this.checkboxesValues.splice(index, 1);
+                    this.checkboxValues.splice(index, 1);
                 }
             },
             selectAll() {
                 if (this.allSelected === false) {
                     this.allSelected = true;
-                    this.checkboxesValues = [];
+                    this.checkboxValues = [];
                     for (let i = 0; i < this.images.length; i++) {
                         if (this.images[i] !== null) {
-                            this.checkboxesValues.push(i);
+                            this.checkboxValues.push(i);
                         }
                     }
                 } else {
                     this.allSelected = false;
-                    this.checkboxesValues = [];
+                    this.checkboxValues = [];
                 }
-
             },
             deletePage(i) {
                 /*this.images[i] = null
@@ -85,16 +80,13 @@
                 the wrong page numbers will go to the backend.
                 image.length must be constant
                 */
-                const index = this.checkboxesValues.indexOf(i);
-                this.checkboxesValues.splice(index, 1);
+                const index = this.checkboxValues.indexOf(i);
+                this.checkboxValues.splice(index, 1);
                 this.images[i] = null;
             },
             submitFile() {
-                //Initialize the form data
                 let formData = new FormData();
-                //Add the form data we need to submit
                 formData.append('file', this.uploadFile);
-                //Make the request to the POST /single-uploadFile URL
                 axios.post('http://192.168.3.2:6060/upload-single', formData,
                     {
                         headers: {
@@ -106,16 +98,15 @@
                     this.imagesLoaded = true;
                 });
             },
-            //Handles a change on the uploadFile upload
             handleFileUpload() {
                 this.uploadFile = this.$refs.uploadFile.files[0];
                 this.submitFile();
             },
             sendPageNumbers() {
-                axios.post('http://192.168.3.2:6060/split', this.checkboxesValues
+                axios.post('http://192.168.3.2:6060/split', this.checkboxValues
                 ).then(response => {
-                    this.fileLink = response.data;
-                    this.fileReady = true;
+                    this.splitFile = response.data;
+                    this.fileLoaded = true;
                     this.imagesLoaded = false;
                 });
             }
@@ -175,11 +166,42 @@
         height: 25px;
     }
 
-    .send {
+    .button {
+        background-color: #ffffff;
+        color: black;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
         display: inline-block;
-        width: 100px;
-        height: 30px;
-        margin-top: 10px;
-        margin-bottom: 10px;
+        font-size: 16px;
+        margin: 4px 2px;
+        transition-duration: 0.4s;
+        cursor: pointer;
+        border: 2px solid black;
+        border-radius: 2px;
+    }
+
+    .button:hover {
+        background-color: black;
+        color: white;
+    }
+
+    a:link {
+        background-color: white;
+        color: black;
+        padding: 10px 20px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        transition-duration: 0.4s;
+        cursor: pointer;
+        border: 2px solid black;
+        border-radius: 2px;
+    }
+
+    a:hover, a:active, a:visited {
+        background-color: greenyellow;
     }
 </style>
