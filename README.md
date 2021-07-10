@@ -1,4 +1,4 @@
-# SplitPDFOnline
+# PDF_Service
 Spring Boot, MVC, Thymeleaf, Apache PDFBox
 
 Simple web application that splits the PDF file. User upload file, pages are extracted from the file. Where one file equals one page.
